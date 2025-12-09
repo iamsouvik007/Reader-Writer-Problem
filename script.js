@@ -147,58 +147,95 @@ function updateCSVisuals() {
     renderActiveEntities();
 }
 
+/**
+ * CORRECTED SCHEDULING LOGIC
+ * Handles Reader Priority and Writer Priority modes correctly
+ */
 function checkScheduler() {
     if (!state.isRunning) return;
     if (state.queue.length === 0) return;
 
-    const writerActive = state.activeAgents.some(a => a.type === 'writer');
-    const readersActive = state.activeAgents.some(a => a.type === 'reader');
+    const activeReaders = state.activeAgents.filter(a => a.type === 'reader');
+    const activeWriters = state.activeAgents.filter(a => a.type === 'writer');
+    const next = state.queue[0];
 
+    // ===== READER PRIORITY MODE (Readers First) =====
     if (state.priorityMode === 'reader') {
-        // Reader Priority Mode
-        const candidate = state.queue[0];
-        let canEnter = false;
+        
+        // Look ahead: find the first reader in queue (even if not at head)
+        const readerIndex = state.queue.findIndex(e => e.type === 'reader');
 
-        if (candidate.type === 'writer') {
-            // Writer needs EMPTY CS
-            if (!writerActive && !readersActive) {
-                canEnter = true;
-            }
-        } else {
-            // Reader needs NO WRITER
-            if (!writerActive) {
-                canEnter = true;
-            }
+        // If a reader exists in queue and no writer is active, promote that reader
+        if (readerIndex !== -1 && activeWriters.length === 0) {
+            promoteAgent(readerIndex);
+            return;
         }
 
-        if (canEnter) {
-            processEntry(candidate);
+        // If queue head is a writer and no readers/writers active, allow writer
+        if (next.type === 'writer' && activeReaders.length === 0 && activeWriters.length === 0) {
+            promoteAgent(0);
+            return;
         }
-    } else {
-        // Writer Priority Mode
-        // Check if any writers are waiting
-        const hasWaitingWriter = state.queue.some(a => a.type === 'writer');
-        const candidate = state.queue[0];
-        let canEnter = false;
+    } 
+    
+    // ===== WRITER PRIORITY MODE (Writers First) =====
+    else if (state.priorityMode === 'writer') {
+        
+        // Check if ANY writer is waiting in queue
+        const writerWaiting = state.queue.some(e => e.type === 'writer');
 
-        if (candidate.type === 'writer') {
-            // Writer needs EMPTY CS
-            if (!writerActive && !readersActive) {
-                canEnter = true;
+        if (writerWaiting) {
+            // BLOCK new readers if a writer is waiting
+            if (next.type === 'reader') {
+                return; // Do nothing, reader must wait
             }
-        } else {
-            // Reader can only enter if NO WRITER is active and NO WRITER is waiting
-            if (!writerActive && !hasWaitingWriter) {
-                canEnter = true;
+
+            // Allow writer ONLY when no readers/writers are active
+            if (next.type === 'writer' && activeReaders.length === 0 && activeWriters.length === 0) {
+                promoteAgent(0);
+                return;
             }
+            return; // Writer must wait for readers to finish
         }
 
-        if (canEnter) {
-            processEntry(candidate);
+        // No writer waiting: handle readers normally
+        if (next.type === 'reader' && activeWriters.length === 0) {
+            promoteAgent(0);
+            return;
+        }
+
+        // Allow writer if critical section is empty
+        if (next.type === 'writer' && activeReaders.length === 0 && activeWriters.length === 0) {
+            promoteAgent(0);
+            return;
         }
     }
 }
 
+/**
+ * Promotes an agent from queue to active (by index)
+ * @param {number} index - Index of agent in queue to promote
+ */
+function promoteAgent(index) {
+    // Remove agent from queue at specified index
+    const agent = state.queue.splice(index, 1)[0];
+    renderQueue();
+
+    // Add to active agents
+    state.activeAgents.push(agent);
+    renderActiveEntities();
+
+    // Schedule exit after duration
+    setTimeout(() => {
+        state.activeAgents = state.activeAgents.filter(a => a.id !== agent.id);
+        const orb = document.getElementById(`orb-${agent.id}`);
+        if (orb) orb.remove();
+        renderActiveEntities();
+        addToCompleted(agent);
+    }, state.duration);
+}
+
+// DEPRECATED: Old processEntry function replaced by promoteAgent
 function processEntry(candidate) {
     // Move from queue to active
     state.queue.shift();
