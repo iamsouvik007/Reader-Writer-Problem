@@ -155,60 +155,90 @@ function checkScheduler() {
     if (!state.isRunning) return;
     if (state.queue.length === 0) return;
 
+    const next = state.queue[0];
     const activeReaders = state.activeAgents.filter(a => a.type === 'reader');
     const activeWriters = state.activeAgents.filter(a => a.type === 'writer');
-    const next = state.queue[0];
+    const writerWaiting = state.queue.some(e => e.type === 'writer');
 
-    // ===== READER PRIORITY MODE (Readers First) =====
+    // ==============================================================
+    //  MODE 1: READER PRIORITY (Readers-first scheduling)
+    // ==============================================================
+
     if (state.priorityMode === 'reader') {
-        
-        // Look ahead: find the first reader in queue (even if not at head)
-        const readerIndex = state.queue.findIndex(e => e.type === 'reader');
 
-        // If a reader exists in queue and no writer is active, promote that reader
-        if (readerIndex !== -1 && activeWriters.length === 0) {
-            promoteAgent(readerIndex);
-            return;
-        }
+        // ✔ If head is writer but a reader exists later in queue → let the reader in
+        if (next.type === 'writer') {
+            const readerIndex = state.queue.findIndex(e => e.type === 'reader');
 
-        // If queue head is a writer and no readers/writers active, allow writer
-        if (next.type === 'writer' && activeReaders.length === 0 && activeWriters.length === 0) {
-            promoteAgent(0);
-            return;
-        }
-    } 
-    
-    // ===== WRITER PRIORITY MODE (Writers First) =====
-    else if (state.priorityMode === 'writer') {
-        
-        // Check if ANY writer is waiting in queue
-        const writerWaiting = state.queue.some(e => e.type === 'writer');
-
-        if (writerWaiting) {
-            // BLOCK new readers if a writer is waiting
-            if (next.type === 'reader') {
-                return; // Do nothing, reader must wait
-            }
-
-            // Allow writer ONLY when no readers/writers are active
-            if (next.type === 'writer' && activeReaders.length === 0 && activeWriters.length === 0) {
-                promoteAgent(0);
+            if (readerIndex !== -1 && activeWriters.length === 0) {
+                promoteAgent(readerIndex);
                 return;
             }
-            return; // Writer must wait for readers to finish
         }
 
-        // No writer waiting: handle readers normally
+        // ✔ Normal Reader entry: enter if no writer is active
         if (next.type === 'reader' && activeWriters.length === 0) {
             promoteAgent(0);
             return;
         }
 
-        // Allow writer if critical section is empty
-        if (next.type === 'writer' && activeReaders.length === 0 && activeWriters.length === 0) {
+        // ✔ Writer enters ONLY when no readers active
+        if (next.type === 'writer' &&
+            activeReaders.length === 0 &&
+            activeWriters.length === 0) {
+
             promoteAgent(0);
             return;
         }
+
+        // Otherwise → do nothing (waiting)
+        return;
+    }
+
+    // ==============================================================
+    //  MODE 2: WRITER PRIORITY (Writers-first scheduling)
+    // ==============================================================
+
+    if (state.priorityMode === 'writer') {
+
+        // ✔ If ANY writer waiting → BLOCK new readers AFTER the first writer
+        if (writerWaiting) {
+            
+            // Find position of first writer in queue
+            const firstWriterIndex = state.queue.findIndex(e => e.type === 'writer');
+
+            // If next in queue is reader AND it's BEFORE the first writer → ALLOW
+            if (next.type === 'reader') {
+                const nextIndex = 0; // next is always at position 0
+                
+                if (nextIndex < firstWriterIndex && activeWriters.length === 0) {
+                    // Reader is before writer, allow it
+                    promoteAgent(0);
+                    return;
+                }
+                // Reader is after writer or writer is active, block it
+                return;
+            }
+
+            // ✔ Allow writer ONLY when no active readers
+            if (next.type === 'writer' &&
+                activeReaders.length === 0 &&
+                activeWriters.length === 0) {
+
+                promoteAgent(0);
+                return;
+            }
+
+            return;
+        }
+
+        // ✔ If no writer waiting → allow readers normally
+        if (next.type === 'reader' && activeWriters.length === 0) {
+            promoteAgent(0);
+            return;
+        }
+
+        return;
     }
 }
 
