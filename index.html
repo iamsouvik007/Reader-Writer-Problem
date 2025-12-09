@@ -1,0 +1,474 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reader-Writer Problem Visualization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="header-section">
+        <span class="badge">Operating Systems Visualization</span>
+        <h1>The Reader–Writer Problem</h1>
+        <p class="subtitle">
+            An interactive simulation demonstrating concurrency control. Observe how multiple <span class="highlight-green">Readers</span> can access a resource simultaneously, while <span class="highlight-blue">Writers</span> require exclusive access.
+        </p>
+    </header>
+
+    <div class="main-container">
+        
+        <div class="control-bar">
+            <div class="action-buttons">
+                <button class="btn btn-reader" id="addReaderBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    Add Reader
+                </button>
+                <button class="btn btn-writer" id="addWriterBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    Add Writer
+                </button>
+            </div>
+
+            <div class="controls-right">
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="reader" id="readerModeBtn">Reader Priority</button>
+                    <button class="mode-btn" data-mode="writer" id="writerModeBtn">Writer Priority</button>
+                </div>
+
+                <div class="slider-group">
+                    <label for="durationSlider">Duration</label>
+                    <input type="range" id="durationSlider" min="500" max="4000" step="100" value="2000">
+                </div>
+                
+                <button class="icon-btn" id="pauseBtn" title="Pause/Resume">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="pauseIcon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                
+                <button class="btn-reset" id="resetBtn">Reset</button>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="color:#64748b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                        Waiting Queue
+                    </div>
+                    <span class="status-pill" id="queueCountBadge">0</span>
+                </div>
+                <div class="panel-body">
+                    <div id="waitingQueue" class="queue-list">
+                        <div class="empty-state" id="queueEmptyState">
+                            <div class="empty-icon">⏳</div>
+                            <span>No processes waiting</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        Shared Resource (Critical Section)
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="criticalSection" class="cs-container">
+                        <div class="status-indicator idle" id="csStatusBadge">Status: Idle</div>
+                        
+                        <div class="orbit-ring"></div>
+                        
+                        <div class="resource-core" id="resourceCore">
+                            <div class="resource-icon">DATA</div>
+                            <div class="resource-label">Shared Data</div>
+                        </div>
+                        
+                        <div id="activeContainer" style="position: absolute; width: 100%; height: 100%; pointer-events: none;"></div>
+                    </div>
+                </div>
+                <div class="cs-footer">
+                    <span><span class="dot dot-green"></span>Readers: <span id="activeReaders">0</span></span>
+                    <span><span class="dot dot-blue"></span>Writers: <span id="activeWriters">0</span></span>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="color:#64748b"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+                        Completed
+                    </div>
+                    <button class="btn-reset" style="font-size: 0.75rem; color: var(--text-muted);" id="clearCompletedBtn">Clear</button>
+                </div>
+                <div class="panel-body" style="overflow-y: auto; max-height: 350px;">
+                    <ul class="completed-list" id="completedList">
+                        </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="info-card">
+            <div>
+                <div class="info-header">
+                    <svg width="24" height="24" fill="#3b82f6" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6A4.997 4.997 0 0 1 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/></svg>
+                    Understanding the Concept
+                </div>
+                <div class="info-content">
+                    <h3>What is the Reader–Writer Problem?</h3>
+                    <br>
+                    <p>In computer science, multiple processes often need to access the same shared data (like a database or file). The problem arises when we need to ensure data integrity without sacrificing performance.</p>
+                    
+                    <ul class="feature-list">
+                        <li>
+                            <div class="feature-icon" style="color: var(--accent-green); margin-right: 8px;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            </div>
+                            <span><strong>Readers</strong> can access the resource simultaneously. Reading doesn't change data, so no conflicts occur.</span>
+                        </li>
+                        <li>
+                            <div class="feature-icon" style="color: var(--accent-blue); margin-right: 8px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-9-2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>
+                            </div>
+                            <span><strong>Writers</strong> need <em>exclusive access</em>. If a writer is active, no one else (Reader or Writer) can enter.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="analogy-box">
+                <div class="analogy-title">
+                    <svg width="20" height="20" fill="#f59e0b" viewBox="0 0 24 24"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>
+                    Real-World Analogy: The Whiteboard
+                </div>
+                <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 12px;">Imagine a classroom whiteboard.</p>
+                
+                <div class="analogy-item" style="border-left: 3px solid var(--accent-green);">
+                    <div class="analogy-icon-box" style="background: var(--accent-green-light); color: var(--accent-green);">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                    </div>
+                    <span>Multiple students can <strong>read</strong> the board at the same time without issues.</span>
+                </div>
+
+                <div class="analogy-item" style="border-left: 3px solid var(--accent-blue);">
+                    <div class="analogy-icon-box" style="background: var(--accent-blue-light); color: var(--accent-blue);">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    </div>
+                    <span>Only one person can <strong>write</strong> on it at a time. If someone is writing, others must wait.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Theory Section -->
+        <div class="theory-section">
+            <div class="theory-header">
+                <h2 class="theory-title">
+                    Readers–Writers Problem
+                </h2>
+                <p class="theory-subtitle">Last Updated: December 10, 2025</p>
+            </div>
+
+            <div class="theory-content">
+                <!-- Introduction -->
+                <div class="theory-card">
+                    <h3>What is the Readers–Writers Problem?</h3>
+                    <p>
+                        The Readers–Writers problem is a classic synchronization challenge in computer science that deals with managing concurrent access to a shared resource (like a database, file, or memory). The problem arises when multiple processes need to access the same data simultaneously, and we need to ensure data integrity without sacrificing performance.
+                    </p>
+                    <p>
+                        <strong>The Core Challenge:</strong> How do we allow multiple readers to access data concurrently while ensuring that writers have exclusive access to prevent data corruption?
+                    </p>
+
+                    <h4>Why Synchronization is Needed</h4>
+                    <ul>
+                        <li><strong>Data Integrity:</strong> Without proper synchronization, readers might see incomplete or corrupted data while a writer is modifying it</li>
+                        <li><strong>Race Conditions:</strong> Multiple writers updating the same data simultaneously can lead to lost updates and inconsistent state</li>
+                        <li><strong>Performance:</strong> We want to maximize concurrency (allow multiple readers) while maintaining correctness</li>
+                    </ul>
+
+                    <h4>Real-World Analogy: Wikipedia Article</h4>
+                    <div class="highlight-box">
+                        <p><strong>Reading:</strong> Thousands of people can read a Wikipedia article simultaneously. Since reading doesn't modify the content, there's no conflict between readers.</p>
+                        <p><strong>Writing:</strong> When someone edits the article, they need exclusive access. No one else can edit at the same time, and readers should wait to see the complete updated version—not a half-edited mess.</p>
+                    </div>
+
+                    <h4>Other Real-World Examples</h4>
+                    <ul>
+                        <li><strong>Database Systems:</strong> Multiple users querying customer records (readers) vs. an admin updating records (writer)</li>
+                        <li><strong>File Systems:</strong> Multiple programs reading a configuration file vs. one program updating it</li>
+                        <li><strong>Caching Systems:</strong> Multiple threads reading cached data vs. one thread refreshing the cache</li>
+                    </ul>
+                </div>
+
+                <!-- Variants -->
+                <div class="theory-card">
+                    <h3>Variants of the Problem</h3>
+                    <p>There are three main approaches to solving the Readers–Writers problem, each with different priorities:</p>
+
+                    <div class="variants-grid">
+                        <div class="variant-card">
+                            <h5>Readers Preference (First Solution)</h5>
+                            <p><strong>Priority:</strong> Readers are favored</p>
+                            <p><strong>Behavior:</strong> Readers never wait if data is currently being read. New readers can join even if writers are waiting.</p>
+                            <p><strong>Advantage:</strong> Maximum read concurrency</p>
+                            <p><strong>Disadvantage:</strong> Writers may starve if readers keep arriving</p>
+                        </div>
+
+                        <div class="variant-card">
+                            <h5>Writers Preference (Second Solution)</h5>
+                            <p><strong>Priority:</strong> Writers are favored</p>
+                            <p><strong>Behavior:</strong> Once a writer requests access, no new readers are allowed to start. Writers get priority over waiting readers.</p>
+                            <p><strong>Advantage:</strong> Ensures writers don't wait indefinitely</p>
+                            <p><strong>Disadvantage:</strong> Readers may starve, reduced read concurrency</p>
+                        </div>
+
+                        <div class="variant-card">
+                            <h5>Fair Solution (Third Solution)</h5>
+                            <p><strong>Priority:</strong> First-come, first-served</p>
+                            <p><strong>Behavior:</strong> Processes are served in the order they arrive. No starvation for either readers or writers.</p>
+                            <p><strong>Advantage:</strong> Fair to both readers and writers</p>
+                            <p><strong>Disadvantage:</strong> More complex implementation, slightly reduced concurrency</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allowed Cases -->
+                <div class="theory-card">
+                    <h3>Allowed Cases (Reader Preference)</h3>
+                    <p>This table shows which concurrent operations are permitted in the Reader Preference solution:</p>
+
+                    <table class="case-table">
+                        <thead>
+                            <tr>
+                                <th>Case</th>
+                                <th>Process 1</th>
+                                <th>Process 2</th>
+                                <th>Allowed?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Case 1</strong></td>
+                                <td>Writing</td>
+                                <td>Writing</td>
+                                <td class="not-allowed">❌ Not Allowed</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Case 2</strong></td>
+                                <td>Writing</td>
+                                <td>Reading</td>
+                                <td class="not-allowed">❌ Not Allowed</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Case 3</strong></td>
+                                <td>Reading</td>
+                                <td>Writing</td>
+                                <td class="not-allowed">❌ Not Allowed</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Case 4</strong></td>
+                                <td>Reading</td>
+                                <td>Reading</td>
+                                <td class="allowed">✅ Allowed</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Key Insight:</strong> Only multiple readers can access the shared resource simultaneously. Any writer requires exclusive access.</p>
+                </div>
+
+                <!-- Synchronization Variables -->
+                <div class="theory-card">
+                    <h3>Synchronization Variables</h3>
+                    <p>The Reader Preference solution uses the following synchronization primitives:</p>
+
+                    <div class="variants-grid">
+                        <div class="variant-card">
+                            <h5>mutex (Semaphore)</h5>
+                            <p><strong>Purpose:</strong> Protects the reader count variable</p>
+                            <p><strong>Initial Value:</strong> 1 (binary semaphore)</p>
+                            <p><strong>Usage:</strong> Ensures that only one process can modify <code>readcnt</code> at a time, preventing race conditions when readers arrive/depart</p>
+                        </div>
+
+                        <div class="variant-card">
+                            <h5>wrt (Semaphore)</h5>
+                            <p><strong>Purpose:</strong> Ensures exclusive writer access</p>
+                            <p><strong>Initial Value:</strong> 1 (binary semaphore)</p>
+                            <p><strong>Usage:</strong> Writers acquire this lock for exclusive access. The first reader also acquires it to block writers</p>
+                        </div>
+
+                        <div class="variant-card">
+                            <h5>readcnt (Integer)</h5>
+                            <p><strong>Purpose:</strong> Counts active readers</p>
+                            <p><strong>Initial Value:</strong> 0</p>
+                            <p><strong>Usage:</strong> Tracks how many readers are currently accessing the resource. First reader locks writers, last reader unlocks them</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Semaphore Operations -->
+                <div class="theory-card">
+                    <h3>Semaphore Operations</h3>
+                    <p>Semaphores use two atomic operations to control access:</p>
+
+                    <div class="highlight-box">
+                        <p><strong class="code-function">wait(S)</strong> or <strong class="code-function">P(S)</strong>:</p>
+                        <ul>
+                            <li>Decrements the semaphore value</li>
+                            <li>If the value becomes negative, the process blocks (waits)</li>
+                            <li>Used to <strong>request access</strong> to a critical section</li>
+                        </ul>
+                    </div>
+
+                    <div class="highlight-box">
+                        <p><strong class="code-function">signal(S)</strong> or <strong class="code-function">V(S)</strong>:</p>
+                        <ul>
+                            <li>Increments the semaphore value</li>
+                            <li>If processes are waiting, one is awakened</li>
+                            <li>Used to <strong>release access</strong> from a critical section</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Reader Algorithm -->
+                <div class="theory-card">
+                    <h3>Reader Algorithm (Reader Preference)</h3>
+                    <p>This pseudocode shows how readers operate in the Reader Preference solution:</p>
+
+                    <div class="code-block">
+<pre><span class="code-keyword">do</span> {
+   <span class="code-function">wait</span>(mutex);              <span class="code-comment">// Lock to modify readcnt</span>
+   readcnt++;                    <span class="code-comment">// Increment reader count</span>
+
+   <span class="code-keyword">if</span> (readcnt == 1)
+       <span class="code-function">wait</span>(wrt);           <span class="code-comment">// First reader blocks writers</span>
+   
+   <span class="code-function">signal</span>(mutex);            <span class="code-comment">// Unlock readcnt</span>
+
+   <span class="code-comment">// ---- Critical Section (Reading) ----</span>
+   <span class="code-comment">// Reader accesses shared data here</span>
+
+   <span class="code-function">wait</span>(mutex);              <span class="code-comment">// Lock to modify readcnt</span>
+   readcnt--;                    <span class="code-comment">// Decrement reader count</span>
+   
+   <span class="code-keyword">if</span> (readcnt == 0)
+       <span class="code-function">signal</span>(wrt);         <span class="code-comment">// Last reader allows writers</span>
+   
+   <span class="code-function">signal</span>(mutex);            <span class="code-comment">// Unlock readcnt</span>
+
+} <span class="code-keyword">while</span>(true);</pre>
+                    </div>
+
+                    <h4>How It Works:</h4>
+                    <div class="highlight-box">
+                        <p><strong>🔹 Entry Section:</strong></p>
+                        <ul>
+                            <li>Reader locks <code>mutex</code> to safely increment <code>readcnt</code></li>
+                            <li><strong>First reader</strong> (readcnt == 1) acquires <code>wrt</code> lock, blocking all writers</li>
+                            <li>Subsequent readers just increment the count and proceed immediately</li>
+                            <li>Reader unlocks <code>mutex</code> to allow other readers to enter</li>
+                        </ul>
+
+                        <p><strong>🔹 Exit Section:</strong></p>
+                        <ul>
+                            <li>Reader locks <code>mutex</code> to safely decrement <code>readcnt</code></li>
+                            <li><strong>Last reader</strong> (readcnt == 0) releases <code>wrt</code> lock, allowing writers</li>
+                            <li>Reader unlocks <code>mutex</code></li>
+                        </ul>
+                    </div>
+
+                    <p><strong>Key Point:</strong> Multiple readers can be in the critical section simultaneously. The first reader "opens the door" for all subsequent readers, and the last reader "closes the door" to allow writers.</p>
+                </div>
+
+                <!-- Writer Algorithm -->
+                <div class="theory-card">
+                    <h3>Writer Algorithm</h3>
+                    <p>Writers have a simpler algorithm since they require exclusive access:</p>
+
+                    <div class="code-block">
+<pre><span class="code-keyword">do</span> {
+   <span class="code-function">wait</span>(wrt);               <span class="code-comment">// Request exclusive access</span>
+
+   <span class="code-comment">// ---- Critical Section (Writing) ----</span>
+   <span class="code-comment">// Writer modifies shared data here</span>
+
+   <span class="code-function">signal</span>(wrt);             <span class="code-comment">// Release exclusive access</span>
+
+} <span class="code-keyword">while</span>(true);</pre>
+                    </div>
+
+                    <h4>How It Works:</h4>
+                    <div class="highlight-box">
+                        <p><strong>🔹 Entry Section:</strong></p>
+                        <ul>
+                            <li>Writer calls <code>wait(wrt)</code> to request exclusive access</li>
+                            <li>If <code>wrt</code> is available (value = 1), writer proceeds immediately</li>
+                            <li>If <code>wrt</code> is locked (by readers or another writer), writer blocks and waits</li>
+                        </ul>
+
+                        <p><strong>🔹 Exit Section:</strong></p>
+                        <ul>
+                            <li>Writer calls <code>signal(wrt)</code> to release the lock</li>
+                            <li>This wakes up one waiting process (either a writer or the first reader in queue)</li>
+                        </ul>
+                    </div>
+
+                    <p><strong>Key Point:</strong> A writer must wait until no readers or writers are active. Once a writer gains access, no other process can enter the critical section.</p>
+                </div>
+
+                <!-- Starvation -->
+                <div class="theory-card">
+                    <div class="warning-box">
+                        <h3>Starvation Problem</h3>
+                        <p>
+                            <strong>In Reader Preference:</strong> Writers may suffer from starvation. If readers keep arriving frequently, a writer might never get a chance to access the resource. This is because new readers can always join as long as at least one reader is active, effectively blocking writers indefinitely.
+                        </p>
+                        <p>
+                            <strong>Example Scenario:</strong> Imagine a popular database where SELECT queries (reads) are constant. An UPDATE query (write) might wait for a very long time if reads never stop coming.
+                        </p>
+                        <p>
+                            <strong>In Writer Preference:</strong> Readers may wait longer than necessary because writers are prioritized. Once a writer requests access, no new readers are admitted until all waiting writers complete.
+                        </p>
+                        <p>
+                            <strong>Solution:</strong> Use a fair scheduling algorithm (like a FIFO queue) where processes are served in the order they arrive, regardless of type. This prevents starvation but may reduce overall concurrency.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="theory-card">
+                    <h3>Summary</h3>
+                    <p>
+                        The Readers–Writers problem is fundamental to understanding concurrent systems and synchronization. The Reader Preference solution demonstrates how to maximize read concurrency using semaphores, allowing multiple readers to access shared data simultaneously while ensuring writers have exclusive access.
+                    </p>
+                    <p>
+                        <strong>Key Takeaways:</strong>
+                    </p>
+                    <ul>
+                        <li>Readers can share access because they don't modify data</li>
+                        <li>Writers need exclusive access to maintain data consistency</li>
+                        <li>The first reader blocks writers; the last reader unblocks them</li>
+                        <li>Semaphores (<code>mutex</code> and <code>wrt</code>) coordinate access safely</li>
+                        <li>Different variants prioritize readers, writers, or fairness</li>
+                        <li>Understanding this problem is crucial for designing databases, file systems, and concurrent applications</li>
+                    </ul>
+                    <p>
+                        This problem and its solutions form the foundation for more complex synchronization mechanisms used in modern operating systems and distributed systems.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
