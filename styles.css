@@ -987,13 +987,335 @@ input[type=range] {
 
 /* --- Responsive --- */
 @media (max-width: 900px) {
-    .dashboard { grid-template-columns: 1fr; }
-    .info-card { grid-template-columns: 1fr; }
-    .control-bar { flex-direction: column; align-items: stretch; }
-    .controls-right { border-left: none; padding-left: 0; justify-content: space-between; margin-top: 10px; }
-    .footer { padding: 24px 28px; }
-    .footer-title { font-size: 1rem; }
-    .footer-members { font-size: 0.875rem; }
+    body {
+        padding: 16px 12px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
+    }
+
+    .badge {
+        font-size: 0.7rem;
+        padding: 6px 12px;
+    }
+
+    .dashboard { 
+        grid-template-columns: 1fr; 
+        gap: 16px;
+    }
+
+    .panel {
+        border-radius: 16px;
+    }
+
+    .panel-body {
+        padding: 16px;
+    }
+
+    .info-card { 
+        grid-template-columns: 1fr; 
+        padding: 24px;
+        gap: 24px;
+    }
+
+    .control-bar { 
+        flex-direction: column; 
+        align-items: stretch; 
+        padding: 16px 20px;
+        gap: 16px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 14px 20px;
+    }
+
+    .controls-right { 
+        border-left: none; 
+        padding-left: 0; 
+        justify-content: space-between; 
+        margin-top: 0;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .mode-selector {
+        width: 100%;
+    }
+
+    .mode-btn {
+        flex: 1;
+    }
+
+    .slider-group {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    input[type=range] {
+        flex: 1;
+        min-width: 100px;
+    }
+
+    .cs-container {
+        min-height: 300px;
+        padding: 20px;
+    }
+
+    .orbit-ring {
+        width: 300px;
+        height: 300px;
+    }
+
+    .resource-core {
+        width: 180px;
+        height: 180px;
+    }
+
+    .active-entity {
+        width: 48px;
+        height: 48px;
+        font-size: 0.875rem;
+    }
+
+    .status-indicator {
+        font-size: 0.75rem;
+        padding: 8px 16px;
+        top: 16px;
+    }
+
+    .theory-card {
+        padding: 24px;
+    }
+
+    .theory-title {
+        font-size: 1.5rem;
+    }
+
+    .variants-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .case-table {
+        font-size: 0.8125rem;
+    }
+
+    .case-table th,
+    .case-table td {
+        padding: 12px 8px;
+    }
+
+    .code-block {
+        font-size: 0.75rem;
+        padding: 16px;
+        overflow-x: auto;
+    }
+
+    .footer { 
+        padding: 20px 16px; 
+        margin-top: 32px;
+    }
+
+    .footer-title { 
+        font-size: 0.875rem; 
+    }
+
+    .footer-members { 
+        font-size: 0.8125rem; 
+    }
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    .header-section {
+        margin-bottom: 24px;
+    }
+
+    .subtitle {
+        font-size: 0.875rem;
+    }
+
+    .main-container {
+        gap: 16px;
+    }
+
+    .control-bar {
+        padding: 14px 16px;
+    }
+
+    .cs-container {
+        min-height: 280px;
+        padding: 16px;
+    }
+
+    .orbit-ring {
+        width: 240px;
+        height: 240px;
+    }
+
+    .resource-core {
+        width: 150px;
+        height: 150px;
+    }
+
+    .resource-icon {
+        font-size: 1rem;
+    }
+
+    .resource-label {
+        font-size: 0.75rem;
+    }
+
+    .active-entity {
+        width: 42px;
+        height: 42px;
+        font-size: 0.8125rem;
+    }
+
+    .cs-footer {
+        padding: 12px 16px;
+        font-size: 0.8125rem;
+        gap: 20px;
+    }
+
+    .queue-list,
+    .completed-list {
+        max-height: 300px;
+    }
+
+    .agent-card {
+        padding: 12px 14px;
+    }
+
+    .agent-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 0.75rem;
+    }
+
+    .agent-info {
+        font-size: 0.8125rem;
+    }
+
+    .info-card {
+        padding: 20px;
+        gap: 20px;
+    }
+
+    .info-header {
+        font-size: 1rem;
+    }
+
+    .info-content p {
+        font-size: 0.875rem;
+    }
+
+    .feature-list li {
+        font-size: 0.8125rem;
+    }
+
+    .analogy-box {
+        padding: 20px;
+    }
+
+    .analogy-item {
+        padding: 12px;
+        font-size: 0.8125rem;
+    }
+
+    .theory-card {
+        padding: 20px;
+    }
+
+    .theory-card h3 {
+        font-size: 1.25rem;
+    }
+
+    .theory-card h4 {
+        font-size: 1rem;
+    }
+
+    .theory-card p,
+    .theory-card li {
+        font-size: 0.875rem;
+    }
+
+    .variant-card {
+        padding: 20px;
+    }
+
+    .variant-card h5 {
+        font-size: 1rem;
+    }
+
+    .variant-card p {
+        font-size: 0.875rem;
+    }
+
+    .code-block {
+        font-size: 0.7rem;
+        padding: 12px;
+    }
+
+    .controls-right {
+        gap: 12px;
+    }
+
+    .slider-group {
+        font-size: 0.75rem;
+    }
+
+    .footer {
+        padding: 16px 12px;
+    }
+
+    .footer-title {
+        font-size: 0.8125rem;
+    }
+
+    .footer-members {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 400px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .cs-container {
+        min-height: 240px;
+    }
+
+    .orbit-ring {
+        width: 200px;
+        height: 200px;
+    }
+
+    .resource-core {
+        width: 120px;
+        height: 120px;
+    }
+
+    .active-entity {
+        width: 36px;
+        height: 36px;
+        font-size: 0.75rem;
+    }
 }
 
 @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
